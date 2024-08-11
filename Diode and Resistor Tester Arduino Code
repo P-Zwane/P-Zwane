@@ -1,0 +1,97 @@
+#include <Wire.h> 
+#include <LiquidCrystal_I2C.h>
+LiquidCrystal_I2C lcd(0x27, 16, 2); 
+const float referenceVolts = 5.0; 
+const int diode_value = 0; 
+float diodePin = A1;
+const int sensorPin = A0; // Analog input pin that senses Vout
+int sensorValue = 0; // sensorPin default value
+float Vin = 5; // Input voltage
+float Vout = 0; // Vout default value
+float Rref; // Reference resistor's value in ohms (you can give this value in kiloohms or megaohms -
+the resistance of the tested resistor will be given in the same units)
+float R = 0; // Tested resistors default value
+int value;
+void setup() 
+{
+lcd.begin();
+lcd.clear();
+lcd.print("Diode & Resistor");
+lcd.setCursor(0,1);
+lcd.print(" Testor ");
+Serial.begin(9600);
+//delay(100);
+lcd.clear();
+lcd.print("Select a funtion");
+}
+void loop()
+{
+ if(Serial.available()>0)
+ {
+ value = Serial.read();
+ 
+ if(value == 1)
+ {
+ 
+ if(value == 100)
+ {
+ Rref = 100;
+ }
+ if(value == 10000)
+ {
+ Rref = 10000;
+ }
+ if(value == 100000)
+ {
+ Rref = 100000;
+ }
+ if(value == 1000000)
+ {
+ Rref = 1000000;
+ } 
+ float val = analogRead(diodePin); 
+ float volts = (val / 1023.0) * referenceVolts;
+ Serial.println(R);
+ 
+ sensorValue = analogRead(sensorPin); // Read Vout on analog input pin A0 (Arduino can sense from 
+0-1023, 1023 is 5V)
+ Vout = (Vin * sensorValue) / 1023; // Convert Vout to volts
+ R = Rref * (1 / ((Vin / Vout) - 1)); // Formula to calculate tested resistor's value
+ Serial.println(volts);
+ Serial.println(R); 
+ if ((volts >= 0.55) && (volts <= 0.7))
+ {
+ lcd.clear();
+ lcd.print("Rx: ");
+ lcd.print(R);
+ lcd.print(" Ohms");
+ lcd.setCursor(0,1);
+ lcd.print("Silicon Diode");
+ }
+ if ((volts >= 0.2) && (volts <= 0.55))
+ {
+ lcd.clear();
+ lcd.print("Rx: ");
+ lcd.print(R);
+ lcd.print(" Ohms");
+ lcd.setCursor(0,1);
+ lcd.print("Germanium Diode"); 
+ } 
+ if((volts == 0) || (volts == 5))
+ {
+ lcd.clear();
+ lcd.print("Rx: ");
+ lcd.print(R);
+ lcd.print(" Ohms");
+ lcd.setCursor(0,1);
+ lcd.print("Alter/Input Diode");
+ }
+ 
+ }
+ if(value == 0)
+ {
+ lcd.clear();
+ lcd.print("System Stopped");
+ } 
+ } 
+}
